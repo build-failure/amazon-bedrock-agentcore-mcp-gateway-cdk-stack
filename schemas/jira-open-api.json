@@ -1,0 +1,733 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Jira REST API",
+    "version": "3.0.0",
+    "description": "Jira REST API for project and issue management"
+  },
+  "servers": [
+    {
+      "url": "{{BASE_URL}}/rest/api/3",
+      "description": "Jira Cloud API"
+    }
+  ],
+  "paths": {
+    "/issue": {
+      "post": {
+        "summary": "Create issue",
+        "operationId": "createIssue",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "fields": {
+                    "type": "object",
+                    "properties": {
+                      "project": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "summary": {
+                        "type": "string"
+                      },
+                      "description": {
+                        "type": "object"
+                      },
+                      "issuetype": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Issue created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "key": {
+                      "type": "string"
+                    },
+                    "self": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/issue/{issueIdOrKey}": {
+      "get": {
+        "summary": "Get issue by ID or key",
+        "operationId": "getIssue",
+        "parameters": [
+          {
+            "name": "issueIdOrKey",
+            "in": "path",
+            "required": true,
+            "description": "The issue ID or issue key",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fields",
+            "in": "query",
+            "description": "The list of fields to return for the issue",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "description": "Use expand to include additional information about the issue",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Issue details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Issue"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Issue not found"
+          }
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "summary": "Search for issues using JQL",
+        "operationId": "searchIssues",
+        "parameters": [
+          {
+            "name": "jql",
+            "in": "query",
+            "description": "JQL query string",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "maxResults",
+            "in": "query",
+            "description": "Maximum number of results",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Issue"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/project": {
+      "get": {
+        "summary": "Get all projects",
+        "operationId": "getAllProjects",
+        "parameters": [
+          {
+            "name": "expand",
+            "in": "query",
+            "description": "Use expand to include additional information about projects",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "recent",
+            "in": "query",
+            "description": "Returns the user's most recently accessed projects",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of projects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Project"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/project/{projectIdOrKey}": {
+      "get": {
+        "summary": "Get project by ID or key",
+        "operationId": "getProject",
+        "parameters": [
+          {
+            "name": "projectIdOrKey",
+            "in": "path",
+            "required": true,
+            "description": "The project ID or project key",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "description": "Use expand to include additional information about the project",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Project details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Project"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Project not found"
+          }
+        }
+      }
+    },
+    "/project/{projectIdOrKey}/components": {
+      "get": {
+        "summary": "Get project components",
+        "operationId": "getProjectComponents",
+        "parameters": [
+          {
+            "name": "projectIdOrKey",
+            "in": "path",
+            "required": true,
+            "description": "The project ID or project key",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of project components",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Component"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/project/{projectIdOrKey}/versions": {
+      "get": {
+        "summary": "Get project versions",
+        "operationId": "getProjectVersions",
+        "parameters": [
+          {
+            "name": "projectIdOrKey",
+            "in": "path",
+            "required": true,
+            "description": "The project ID or project key",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "description": "Use expand to include additional information about versions",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of project versions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Version"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Issue": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The ID of the issue"
+          },
+          "key": {
+            "type": "string",
+            "description": "The key of the issue"
+          },
+          "self": {
+            "type": "string",
+            "description": "The URL of the issue"
+          },
+          "fields": {
+            "type": "object",
+            "properties": {
+              "summary": {
+                "type": "string",
+                "description": "The summary of the issue"
+              },
+              "description": {
+                "type": "object",
+                "description": "The description of the issue"
+              },
+              "issuetype": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "iconUrl": {
+                    "type": "string"
+                  }
+                }
+              },
+              "project": {
+                "$ref": "#/components/schemas/Project"
+              },
+              "status": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "iconUrl": {
+                    "type": "string"
+                  },
+                  "statusCategory": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "integer"
+                      },
+                      "key": {
+                        "type": "string"
+                      },
+                      "colorName": {
+                        "type": "string"
+                      },
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              },
+              "priority": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "iconUrl": {
+                    "type": "string"
+                  }
+                }
+              },
+              "assignee": {
+                "type": "object",
+                "properties": {
+                  "accountId": {
+                    "type": "string"
+                  },
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "emailAddress": {
+                    "type": "string"
+                  },
+                  "avatarUrls": {
+                    "type": "object"
+                  }
+                }
+              },
+              "reporter": {
+                "type": "object",
+                "properties": {
+                  "accountId": {
+                    "type": "string"
+                  },
+                  "displayName": {
+                    "type": "string"
+                  },
+                  "emailAddress": {
+                    "type": "string"
+                  },
+                  "avatarUrls": {
+                    "type": "object"
+                  }
+                }
+              },
+              "created": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The date and time the issue was created"
+              },
+              "updated": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The date and time the issue was last updated"
+              },
+              "resolutiondate": {
+                "type": "string",
+                "format": "date-time",
+                "description": "The date and time the issue was resolved"
+              },
+              "resolution": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                }
+              },
+              "components": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Component"
+                }
+              },
+              "fixVersions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Version"
+                }
+              },
+              "versions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Version"
+                }
+              },
+              "labels": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Project": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The ID of the project"
+          },
+          "key": {
+            "type": "string",
+            "description": "The key of the project"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the project"
+          },
+          "description": {
+            "type": "string",
+            "description": "A brief description of the project"
+          },
+          "lead": {
+            "type": "object",
+            "properties": {
+              "accountId": {
+                "type": "string"
+              },
+              "displayName": {
+                "type": "string"
+              },
+              "emailAddress": {
+                "type": "string"
+              }
+            }
+          },
+          "projectTypeKey": {
+            "type": "string",
+            "description": "The project type key"
+          },
+          "simplified": {
+            "type": "boolean",
+            "description": "Whether the project is simplified"
+          },
+          "style": {
+            "type": "string",
+            "description": "The style of the project"
+          },
+          "isPrivate": {
+            "type": "boolean",
+            "description": "Whether the project is private"
+          },
+          "url": {
+            "type": "string",
+            "description": "The URL of the project"
+          },
+          "assigneeType": {
+            "type": "string",
+            "description": "The default assignee when creating issues for this project"
+          },
+          "components": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Component"
+            }
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Version"
+            }
+          },
+          "roles": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Component": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The ID of the component"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the component"
+          },
+          "description": {
+            "type": "string",
+            "description": "The description of the component"
+          },
+          "lead": {
+            "type": "object",
+            "properties": {
+              "accountId": {
+                "type": "string"
+              },
+              "displayName": {
+                "type": "string"
+              }
+            }
+          },
+          "assigneeType": {
+            "type": "string",
+            "description": "The default assignee type for issues created with this component"
+          },
+          "assignee": {
+            "type": "object",
+            "properties": {
+              "accountId": {
+                "type": "string"
+              },
+              "displayName": {
+                "type": "string"
+              }
+            }
+          },
+          "realAssigneeType": {
+            "type": "string",
+            "description": "The type of the assignee"
+          },
+          "realAssignee": {
+            "type": "object",
+            "properties": {
+              "accountId": {
+                "type": "string"
+              },
+              "displayName": {
+                "type": "string"
+              }
+            }
+          },
+          "isAssigneeTypeValid": {
+            "type": "boolean",
+            "description": "Whether the assignee type is valid"
+          },
+          "project": {
+            "type": "string",
+            "description": "The key of the project that contains the component"
+          },
+          "projectId": {
+            "type": "integer",
+            "description": "The ID of the project that contains the component"
+          }
+        }
+      },
+      "Version": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The ID of the version"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name of the version"
+          },
+          "description": {
+            "type": "string",
+            "description": "The description of the version"
+          },
+          "archived": {
+            "type": "boolean",
+            "description": "Whether the version is archived"
+          },
+          "released": {
+            "type": "boolean",
+            "description": "Whether the version is released"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The start date of the version"
+          },
+          "releaseDate": {
+            "type": "string",
+            "format": "date",
+            "description": "The release date of the version"
+          },
+          "overdue": {
+            "type": "boolean",
+            "description": "Whether the version is overdue"
+          },
+          "userStartDate": {
+            "type": "string",
+            "description": "The start date of the version in a user-friendly format"
+          },
+          "userReleaseDate": {
+            "type": "string",
+            "description": "The release date of the version in a user-friendly format"
+          },
+          "project": {
+            "type": "string",
+            "description": "The key of the project that contains the version"
+          },
+          "projectId": {
+            "type": "integer",
+            "description": "The ID of the project that contains the version"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "basicAuth": {
+        "type": "http",
+        "scheme": "basic"
+      }
+    }
+  },
+  "security": [
+    {
+      "basicAuth": []
+    }
+  ]
+}
