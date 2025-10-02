@@ -1,0 +1,874 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Snowflake REST API",
+    "version": "1.0.0",
+    "description": "Minimal Snowflake REST API for data warehouse operations"
+  },
+  "servers": [
+    {
+      "url": "{{BASE_URL}}/api/v2",
+      "description": "Snowflake API Server"
+    }
+  ],
+  "paths": {
+    "/databases": {
+      "get": {
+        "summary": "List databases",
+        "operationId": "listDatabases",
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "description": "Content type that the client can accept",
+            "schema": {
+              "type": "string",
+              "default": "application/json"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of results to return",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "Number of results to skip",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of databases",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Database"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/databases/{databaseName}/schemas": {
+      "get": {
+        "summary": "List schemas in a database",
+        "operationId": "listSchemas",
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "description": "Content type that the client can accept",
+            "schema": {
+              "type": "string",
+              "default": "application/json"
+            }
+          },
+          {
+            "name": "databaseName",
+            "in": "path",
+            "required": true,
+            "description": "The name of the database",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of results to return",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of schemas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Schema"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/databases/{databaseName}/schemas/{schemaName}/tables": {
+      "get": {
+        "summary": "List tables in a schema",
+        "operationId": "listTables",
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "description": "Content type that the client can accept",
+            "schema": {
+              "type": "string",
+              "default": "application/json"
+            }
+          },
+          {
+            "name": "databaseName",
+            "in": "path",
+            "required": true,
+            "description": "The name of the database",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "schemaName",
+            "in": "path",
+            "required": true,
+            "description": "The name of the schema",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum number of results to return",
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of tables",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Table"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/databases/{databaseName}/schemas/{schemaName}/tables/{tableName}": {
+      "get": {
+        "summary": "Get table details",
+        "operationId": "getTable",
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "description": "Content type that the client can accept",
+            "schema": {
+              "type": "string",
+              "default": "application/json"
+            }
+          },
+          {
+            "name": "databaseName",
+            "in": "path",
+            "required": true,
+            "description": "The name of the database",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "schemaName",
+            "in": "path",
+            "required": true,
+            "description": "The name of the schema",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tableName",
+            "in": "path",
+            "required": true,
+            "description": "The name of the table",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Table details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TableDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Table not found"
+          }
+        }
+      }
+    },
+    "/queries": {
+      "post": {
+        "summary": "Execute SQL query",
+        "operationId": "executeQuery",
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "description": "Content type that the client can accept",
+            "schema": {
+              "type": "string",
+              "default": "application/json"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "statement": {
+                    "type": "string",
+                    "description": "SQL statement to execute"
+                  },
+                  "database": {
+                    "type": "string",
+                    "description": "Database context for the query"
+                  },
+                  "schema": {
+                    "type": "string",
+                    "description": "Schema context for the query"
+                  },
+                  "warehouse": {
+                    "type": "string",
+                    "description": "Warehouse to use for the query"
+                  },
+                  "timeout": {
+                    "type": "integer",
+                    "description": "Query timeout in seconds",
+                    "default": 300
+                  }
+                },
+                "required": ["statement"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Query executed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query"
+          }
+        }
+      }
+    },
+    "/queries/{queryId}": {
+      "get": {
+        "summary": "Get query status and results",
+        "operationId": "getQueryStatus",
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "description": "Content type that the client can accept",
+            "schema": {
+              "type": "string",
+              "default": "application/json"
+            }
+          },
+          {
+            "name": "queryId",
+            "in": "path",
+            "required": true,
+            "description": "The query ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Query status and results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryStatus"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Query not found"
+          }
+        }
+      }
+    },
+    "/warehouses": {
+      "get": {
+        "summary": "List warehouses",
+        "operationId": "listWarehouses",
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "description": "Content type that the client can accept",
+            "schema": {
+              "type": "string",
+              "default": "application/json"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of warehouses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Warehouse"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "parameters": {
+      "AcceptHeader": {
+        "name": "Accept",
+        "in": "header",
+        "required": true,
+        "description": "Content type that the client can accept",
+        "schema": {
+          "type": "string",
+          "default": "application/json"
+        }
+      }
+    },
+    "schemas": {
+      "Database": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the database"
+          },
+          "owner": {
+            "type": "string",
+            "description": "The owner of the database"
+          },
+          "comment": {
+            "type": "string",
+            "description": "Comment for the database"
+          },
+          "created_on": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the database was created"
+          },
+          "is_default": {
+            "type": "boolean",
+            "description": "Whether this is the default database"
+          },
+          "is_current": {
+            "type": "boolean",
+            "description": "Whether this is the current database"
+          },
+          "origin": {
+            "type": "string",
+            "description": "Origin of the database"
+          },
+          "retention_time": {
+            "type": "integer",
+            "description": "Data retention time in days"
+          }
+        }
+      },
+      "Schema": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the schema"
+          },
+          "database_name": {
+            "type": "string",
+            "description": "The name of the parent database"
+          },
+          "owner": {
+            "type": "string",
+            "description": "The owner of the schema"
+          },
+          "comment": {
+            "type": "string",
+            "description": "Comment for the schema"
+          },
+          "created_on": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the schema was created"
+          },
+          "is_default": {
+            "type": "boolean",
+            "description": "Whether this is the default schema"
+          },
+          "is_current": {
+            "type": "boolean",
+            "description": "Whether this is the current schema"
+          },
+          "retention_time": {
+            "type": "integer",
+            "description": "Data retention time in days"
+          }
+        }
+      },
+      "Table": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the table"
+          },
+          "database_name": {
+            "type": "string",
+            "description": "The name of the parent database"
+          },
+          "schema_name": {
+            "type": "string",
+            "description": "The name of the parent schema"
+          },
+          "kind": {
+            "type": "string",
+            "description": "The kind of table (TABLE, VIEW, etc.)"
+          },
+          "comment": {
+            "type": "string",
+            "description": "Comment for the table"
+          },
+          "cluster_by": {
+            "type": "string",
+            "description": "Clustering key for the table"
+          },
+          "rows": {
+            "type": "integer",
+            "description": "Number of rows in the table"
+          },
+          "bytes": {
+            "type": "integer",
+            "description": "Size of the table in bytes"
+          },
+          "owner": {
+            "type": "string",
+            "description": "The owner of the table"
+          },
+          "retention_time": {
+            "type": "integer",
+            "description": "Data retention time in days"
+          },
+          "created_on": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the table was created"
+          }
+        }
+      },
+      "TableDetail": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the table"
+          },
+          "database_name": {
+            "type": "string",
+            "description": "The name of the parent database"
+          },
+          "schema_name": {
+            "type": "string",
+            "description": "The name of the parent schema"
+          },
+          "kind": {
+            "type": "string",
+            "description": "The kind of table (TABLE, VIEW, etc.)"
+          },
+          "comment": {
+            "type": "string",
+            "description": "Comment for the table"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Column"
+            }
+          },
+          "cluster_by": {
+            "type": "string",
+            "description": "Clustering key for the table"
+          },
+          "rows": {
+            "type": "integer",
+            "description": "Number of rows in the table"
+          },
+          "bytes": {
+            "type": "integer",
+            "description": "Size of the table in bytes"
+          },
+          "owner": {
+            "type": "string",
+            "description": "The owner of the table"
+          },
+          "retention_time": {
+            "type": "integer",
+            "description": "Data retention time in days"
+          },
+          "created_on": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the table was created"
+          }
+        }
+      },
+      "Column": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the column"
+          },
+          "type": {
+            "type": "string",
+            "description": "The data type of the column"
+          },
+          "kind": {
+            "type": "string",
+            "description": "The kind of column"
+          },
+          "null?": {
+            "type": "string",
+            "description": "Whether the column can be null (Y/N)"
+          },
+          "default": {
+            "type": "string",
+            "description": "Default value for the column"
+          },
+          "primary key": {
+            "type": "string",
+            "description": "Whether the column is a primary key (Y/N)"
+          },
+          "unique key": {
+            "type": "string",
+            "description": "Whether the column is a unique key (Y/N)"
+          },
+          "check": {
+            "type": "string",
+            "description": "Check constraint for the column"
+          },
+          "expression": {
+            "type": "string",
+            "description": "Expression for computed columns"
+          },
+          "comment": {
+            "type": "string",
+            "description": "Comment for the column"
+          }
+        }
+      },
+      "QueryResult": {
+        "type": "object",
+        "properties": {
+          "queryId": {
+            "type": "string",
+            "description": "Unique identifier for the query"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["RUNNING", "SUCCESS", "FAILED", "CANCELLED"],
+            "description": "Status of the query execution"
+          },
+          "message": {
+            "type": "string",
+            "description": "Status message or error details"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            },
+            "description": "Query result data (array of objects)"
+          },
+          "resultSetMetaData": {
+            "type": "object",
+            "properties": {
+              "numRows": {
+                "type": "integer",
+                "description": "Number of rows returned"
+              },
+              "format": {
+                "type": "string",
+                "description": "Format of the result set"
+              },
+              "rowType": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "length": {
+                      "type": "integer"
+                    },
+                    "nullable": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "stats": {
+            "type": "object",
+            "properties": {
+              "numRowsInserted": {
+                "type": "integer"
+              },
+              "numRowsUpdated": {
+                "type": "integer"
+              },
+              "numRowsDeleted": {
+                "type": "integer"
+              },
+              "numDuplicateRowsUpdated": {
+                "type": "integer"
+              }
+            }
+          },
+          "createdOn": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the query was created"
+          }
+        }
+      },
+      "QueryStatus": {
+        "type": "object",
+        "properties": {
+          "queryId": {
+            "type": "string",
+            "description": "Unique identifier for the query"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["RUNNING", "SUCCESS", "FAILED", "CANCELLED"],
+            "description": "Status of the query execution"
+          },
+          "message": {
+            "type": "string",
+            "description": "Status message or error details"
+          },
+          "sqlText": {
+            "type": "string",
+            "description": "The SQL statement that was executed"
+          },
+          "createdOn": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the query was created"
+          },
+          "startedOn": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the query execution started"
+          },
+          "endedOn": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the query execution ended"
+          }
+        }
+      },
+      "Warehouse": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The name of the warehouse"
+          },
+          "state": {
+            "type": "string",
+            "enum": ["STARTED", "STARTING", "SUSPENDED", "SUSPENDING", "RESIZING"],
+            "description": "Current state of the warehouse"
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of warehouse"
+          },
+          "size": {
+            "type": "string",
+            "enum": ["X-SMALL", "SMALL", "MEDIUM", "LARGE", "X-LARGE", "2X-LARGE", "3X-LARGE", "4X-LARGE"],
+            "description": "Size of the warehouse"
+          },
+          "min_cluster_count": {
+            "type": "integer",
+            "description": "Minimum number of clusters"
+          },
+          "max_cluster_count": {
+            "type": "integer",
+            "description": "Maximum number of clusters"
+          },
+          "started_clusters": {
+            "type": "integer",
+            "description": "Number of currently started clusters"
+          },
+          "running": {
+            "type": "integer",
+            "description": "Number of running queries"
+          },
+          "queued": {
+            "type": "integer",
+            "description": "Number of queued queries"
+          },
+          "is_default": {
+            "type": "boolean",
+            "description": "Whether this is the default warehouse"
+          },
+          "is_current": {
+            "type": "boolean",
+            "description": "Whether this is the current warehouse"
+          },
+          "auto_suspend": {
+            "type": "integer",
+            "description": "Auto-suspend time in seconds"
+          },
+          "auto_resume": {
+            "type": "boolean",
+            "description": "Whether auto-resume is enabled"
+          },
+          "available": {
+            "type": "string",
+            "description": "Availability percentage"
+          },
+          "provisioning": {
+            "type": "string",
+            "description": "Provisioning status"
+          },
+          "quiescing": {
+            "type": "string",
+            "description": "Quiescing status"
+          },
+          "other": {
+            "type": "string",
+            "description": "Other status information"
+          },
+          "created_on": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the warehouse was created"
+          },
+          "resumed_on": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the warehouse was last resumed"
+          },
+          "updated_on": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the warehouse was last updated"
+          },
+          "owner": {
+            "type": "string",
+            "description": "The owner of the warehouse"
+          },
+          "comment": {
+            "type": "string",
+            "description": "Comment for the warehouse"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Bearer token authentication using JWT"
+      }
+    }
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ]
+}
