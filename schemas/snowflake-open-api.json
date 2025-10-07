@@ -297,7 +297,9 @@
                     "default": 300
                   }
                 },
-                "required": ["statement"]
+                "required": [
+                  "statement"
+                ]
               }
             }
           }
@@ -395,6 +397,447 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/cortex/complete": {
+      "post": {
+        "summary": "Generate text completion using Snowflake Cortex",
+        "operationId": "cortexComplete",
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "description": "Content type that the client can accept",
+            "schema": {
+              "type": "string",
+              "default": "application/json"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "The model to use for completion",
+                    "enum": [
+                      "snowflake-arctic",
+                      "llama2-7b-chat",
+                      "llama2-13b-chat",
+                      "llama2-70b-chat",
+                      "mistral-7b",
+                      "mistral-large",
+                      "mixtral-8x7b",
+                      "gemma-7b"
+                    ]
+                  },
+                  "prompt": {
+                    "type": "string",
+                    "description": "The input prompt for text generation"
+                  },
+                  "options": {
+                    "type": "object",
+                    "properties": {
+                      "max_tokens": {
+                        "type": "integer",
+                        "description": "Maximum number of tokens to generate",
+                        "default": 512
+                      },
+                      "temperature": {
+                        "type": "number",
+                        "description": "Sampling temperature (0.0 to 1.0)",
+                        "minimum": 0.0,
+                        "maximum": 1.0,
+                        "default": 0.7
+                      },
+                      "top_p": {
+                        "type": "number",
+                        "description": "Top-p sampling parameter",
+                        "minimum": 0.0,
+                        "maximum": 1.0,
+                        "default": 1.0
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "model",
+                  "prompt"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Text completion generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CortexCompletionResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          }
+        }
+      }
+    },
+    "/cortex/sentiment": {
+      "post": {
+        "summary": "Analyze sentiment using Snowflake Cortex",
+        "operationId": "cortexSentiment",
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "description": "Content type that the client can accept",
+            "schema": {
+              "type": "string",
+              "default": "application/json"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "The text to analyze for sentiment"
+                  }
+                },
+                "required": [
+                  "text"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Sentiment analysis completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CortexSentimentResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          }
+        }
+      }
+    },
+    "/cortex/translate": {
+      "post": {
+        "summary": "Translate text using Snowflake Cortex",
+        "operationId": "cortexTranslate",
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "description": "Content type that the client can accept",
+            "schema": {
+              "type": "string",
+              "default": "application/json"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "The text to translate"
+                  },
+                  "from_language": {
+                    "type": "string",
+                    "description": "Source language code (e.g., 'en', 'es', 'fr')"
+                  },
+                  "to_language": {
+                    "type": "string",
+                    "description": "Target language code (e.g., 'en', 'es', 'fr')"
+                  }
+                },
+                "required": [
+                  "text",
+                  "from_language",
+                  "to_language"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Translation completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CortexTranslateResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          }
+        }
+      }
+    },
+    "/cortex/summarize": {
+      "post": {
+        "summary": "Summarize text using Snowflake Cortex",
+        "operationId": "cortexSummarize",
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "description": "Content type that the client can accept",
+            "schema": {
+              "type": "string",
+              "default": "application/json"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "The text to summarize"
+                  },
+                  "max_length": {
+                    "type": "integer",
+                    "description": "Maximum length of the summary",
+                    "default": 200
+                  }
+                },
+                "required": [
+                  "text"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Text summarization completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CortexSummarizeResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          }
+        }
+      }
+    },
+    "/cortex/extract-answer": {
+      "post": {
+        "summary": "Extract answers from text using Snowflake Cortex",
+        "operationId": "cortexExtractAnswer",
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "description": "Content type that the client can accept",
+            "schema": {
+              "type": "string",
+              "default": "application/json"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "The source text to extract answers from"
+                  },
+                  "question": {
+                    "type": "string",
+                    "description": "The question to answer based on the text"
+                  }
+                },
+                "required": [
+                  "text",
+                  "question"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Answer extraction completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CortexExtractAnswerResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          }
+        }
+      }
+    },
+    "/cortex/classify-text": {
+      "post": {
+        "summary": "Classify text using Snowflake Cortex",
+        "operationId": "cortexClassifyText",
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "description": "Content type that the client can accept",
+            "schema": {
+              "type": "string",
+              "default": "application/json"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": {
+                    "type": "string",
+                    "description": "The text to classify"
+                  },
+                  "categories": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "List of possible categories for classification"
+                  }
+                },
+                "required": [
+                  "text",
+                  "categories"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Text classification completed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CortexClassifyResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
+          }
+        }
+      }
+    },
+    "/cortex/embed-text": {
+      "post": {
+        "summary": "Generate text embeddings using Snowflake Cortex",
+        "operationId": "cortexEmbedText",
+        "parameters": [
+          {
+            "name": "Accept",
+            "in": "header",
+            "required": true,
+            "description": "Content type that the client can accept",
+            "schema": {
+              "type": "string",
+              "default": "application/json"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "model": {
+                    "type": "string",
+                    "description": "The embedding model to use",
+                    "enum": [
+                      "snowflake-arctic-embed-m",
+                      "snowflake-arctic-embed-l",
+                      "e5-base-v2"
+                    ]
+                  },
+                  "text": {
+                    "type": "string",
+                    "description": "The text to generate embeddings for"
+                  }
+                },
+                "required": [
+                  "model",
+                  "text"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Text embeddings generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CortexEmbedResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request parameters"
           }
         }
       }
@@ -650,7 +1093,12 @@
           },
           "status": {
             "type": "string",
-            "enum": ["RUNNING", "SUCCESS", "FAILED", "CANCELLED"],
+            "enum": [
+              "RUNNING",
+              "SUCCESS",
+              "FAILED",
+              "CANCELLED"
+            ],
             "description": "Status of the query execution"
           },
           "message": {
@@ -730,7 +1178,12 @@
           },
           "status": {
             "type": "string",
-            "enum": ["RUNNING", "SUCCESS", "FAILED", "CANCELLED"],
+            "enum": [
+              "RUNNING",
+              "SUCCESS",
+              "FAILED",
+              "CANCELLED"
+            ],
             "description": "Status of the query execution"
           },
           "message": {
@@ -767,7 +1220,13 @@
           },
           "state": {
             "type": "string",
-            "enum": ["STARTED", "STARTING", "SUSPENDED", "SUSPENDING", "RESIZING"],
+            "enum": [
+              "STARTED",
+              "STARTING",
+              "SUSPENDED",
+              "SUSPENDING",
+              "RESIZING"
+            ],
             "description": "Current state of the warehouse"
           },
           "type": {
@@ -776,7 +1235,16 @@
           },
           "size": {
             "type": "string",
-            "enum": ["X-SMALL", "SMALL", "MEDIUM", "LARGE", "X-LARGE", "2X-LARGE", "3X-LARGE", "4X-LARGE"],
+            "enum": [
+              "X-SMALL",
+              "SMALL",
+              "MEDIUM",
+              "LARGE",
+              "X-LARGE",
+              "2X-LARGE",
+              "3X-LARGE",
+              "4X-LARGE"
+            ],
             "description": "Size of the warehouse"
           },
           "min_cluster_count": {
@@ -853,6 +1321,109 @@
           "comment": {
             "type": "string",
             "description": "Comment for the warehouse"
+          }
+        }
+      },
+      "CortexCompletionResult": {
+        "type": "object",
+        "properties": {
+          "choices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "messages": {
+                  "type": "string",
+                  "description": "The generated text completion"
+                }
+              }
+            }
+          },
+          "created": {
+            "type": "integer",
+            "description": "Timestamp when the completion was created"
+          },
+          "model": {
+            "type": "string",
+            "description": "The model used for completion"
+          },
+          "usage": {
+            "type": "object",
+            "properties": {
+              "completion_tokens": {
+                "type": "integer",
+                "description": "Number of tokens in the completion"
+              },
+              "prompt_tokens": {
+                "type": "integer",
+                "description": "Number of tokens in the prompt"
+              },
+              "total_tokens": {
+                "type": "integer",
+                "description": "Total number of tokens used"
+              }
+            }
+          }
+        }
+      },
+      "CortexSentimentResult": {
+        "type": "object",
+        "properties": {
+          "sentiment": {
+            "type": "number",
+            "description": "Sentiment score (-1 to 1, where -1 is negative, 0 is neutral, 1 is positive)"
+          }
+        }
+      },
+      "CortexTranslateResult": {
+        "type": "object",
+        "properties": {
+          "translated_text": {
+            "type": "string",
+            "description": "The translated text"
+          }
+        }
+      },
+      "CortexSummarizeResult": {
+        "type": "object",
+        "properties": {
+          "summary": {
+            "type": "string",
+            "description": "The generated summary"
+          }
+        }
+      },
+      "CortexExtractAnswerResult": {
+        "type": "object",
+        "properties": {
+          "answer": {
+            "type": "string",
+            "description": "The extracted answer"
+          }
+        }
+      },
+      "CortexClassifyResult": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "description": "The predicted category"
+          },
+          "confidence": {
+            "type": "number",
+            "description": "Confidence score for the classification (0 to 1)"
+          }
+        }
+      },
+      "CortexEmbedResult": {
+        "type": "object",
+        "properties": {
+          "embeddings": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            },
+            "description": "The generated text embeddings as a vector of numbers"
           }
         }
       }
