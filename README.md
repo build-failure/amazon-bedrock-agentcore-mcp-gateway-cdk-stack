@@ -1,11 +1,11 @@
 # Amazon Bedrock AgentCore MCP Gateway CDK Stack with Multiple Integration Targets
 
-A CDK stack that creates an Amazon Bedrock AgentCore MCP gateway with Cognito authentication and support for multiple integration targets, including JIRA.
+A CDK stack that manages an Amazon Bedrock AgentCore MCP gateway with IAM/JWT authentication and support for multiple integration targets, including JIRA and Snowflake.
 
 ## Architecture
 
 - **Bedrock AgentCore MCP Gateway**: MCP interface for multiple integration targets
-- **Amazon Cognito**: Authentication for the MCP gateway
+- **Authentication**: Supports JWT (with Amazon Cognito) or IAM authentication
 - **IAM Role**: Permissions for the MCP gateway
 - **Agent Core Constructs**: High-level CDK constructs
 - **Integration Targets**: Configurable integration targets (e.g., JIRA)
@@ -35,7 +35,8 @@ The application can be configured using a `config.json` file in the project root
     "name": "MyMcpGateway1",
     "description": "MCP Gateway with multiple integration targets",
     "enableSemanticSearch": false,
-    "exceptionLevel": "DEBUG"
+    "exceptionLevel": "DEBUG",
+    "authenticationType": "JWT"
   },
   "integrationTargets": [
     {
@@ -54,6 +55,14 @@ The application can be configured using a `config.json` file in the project root
   ]
 }
 ```
+
+### Gateway Configuration Options
+
+- `name`: Name of the MCP Gateway
+- `description`: Description of the gateway
+- `enableSemanticSearch`: Enable semantic search for tool discovery (default: false)
+- `exceptionLevel`: Set to "DEBUG" for detailed error messages
+- `authenticationType`: Authentication method - "JWT" (default) or "IAM"
 
 ### Adding New Integration Targets
 
@@ -80,12 +89,29 @@ To add a new integration target, add a new entry to the `integrationTargets` arr
 2. Deploy the stack: `cdk deploy`
 3. Create a Cognito user and set a permanent password
 
+## Authentication
+
+The gateway supports two authentication types:
+
+### JWT Authentication (Default)
+Uses Amazon Cognito for JWT token-based authentication:
+1. Set `"authenticationType": "JWT"` in config.json (or omit for default)
+2. After deployment, create a Cognito user and set a permanent password
+3. Obtain an access token using the client credentials flow
+4. Include the token in your MCP client requests
+
+### IAM Authentication
+Uses AWS IAM with SigV4 signing:
+1. Set `"authenticationType": "IAM"` in config.json
+2. Configure your MCP client with AWS credentials
+3. Requests will be authenticated using AWS SigV4 signing
+4. No Cognito resources will be created
+
 ## Using the MCP Gateway
 
-1. Obtain an access token using the client credentials flow
-2. Include the token in your MCP client requests
-3. Connect to the MCP Gateway URL
-4. Use the configured integration targets to interact with external services
+1. Authenticate using your chosen method (JWT or IAM)
+2. Connect to the MCP Gateway URL
+3. Use the configured integration targets to interact with external services
 
 ## Useful Commands
 

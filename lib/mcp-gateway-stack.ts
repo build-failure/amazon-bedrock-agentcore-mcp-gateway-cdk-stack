@@ -29,12 +29,13 @@ export interface McpGatewayStackProps extends cdk.StackProps {
   gatewayDescription?: string;
   enableSemanticSearch?: boolean;
   exceptionLevel?: 'DEBUG';
+  authenticationType?: 'JWT' | 'IAM';
   // Configuration for integration targets
   integrationTargets?: IntegrationTargetConfig[];
 }
 
 export class McpGatewayStack extends cdk.Stack {
-  public readonly cognitoUserPool: AgentCoreCognitoUserPool;
+  public readonly cognitoUserPool?: AgentCoreCognitoUserPool;
   public readonly gatewayExecutionRole: AgentCoreGatewayExecutionRole;
   public readonly mcpGateway: AgentCoreGateway;
   public readonly schemaBucket: s3.Bucket;
@@ -43,17 +44,21 @@ export class McpGatewayStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: McpGatewayStackProps) {
     super(scope, id, props);
 
-    // Create the Cognito User Pool using the agent-core-cognito construct
-    this.cognitoUserPool = new AgentCoreCognitoUserPool(this, 'McpGatewayCognito', {
-      userPoolName: `McpGatewayUserPool-${this.node.addr.substring(0, 8)}`,
-      clientName: `McpGatewayClient-${this.node.addr.substring(0, 8)}`,
-      enableSelfSignUp: false,
-      tokenValidity: {
-        accessToken: cdk.Duration.hours(1),
-        refreshToken: cdk.Duration.days(30),
-        idToken: cdk.Duration.hours(1),
-      },
-    });
+    const authenticationType = props?.authenticationType || 'JWT';
+
+    // Create the Cognito User Pool only if using JWT authentication
+    if (authenticationType === 'JWT') {
+      this.cognitoUserPool = new AgentCoreCognitoUserPool(this, 'McpGatewayCognito', {
+        userPoolName: `McpGatewayUserPool-${this.node.addr.substring(0, 8)}`,
+        clientName: `McpGatewayClient-${this.node.addr.substring(0, 8)}`,
+        enableSelfSignUp: false,
+        tokenValidity: {
+          accessToken: cdk.Duration.hours(1),
+          refreshToken: cdk.Duration.days(30),
+          idToken: cdk.Duration.hours(1),
+        },
+      });
+    }
 
     // Create the execution role for the MCP Gateway using the agent-core-gateway construct
     // Generate a deterministic ID for the role name to avoid conflicts
@@ -122,14 +127,17 @@ export class McpGatewayStack extends cdk.Stack {
       })
     );
 
-    // Create the JWT authorizer config from the Cognito user pool
-    const jwtAuthorizerConfig = this.cognitoUserPool.createJwtAuthorizerConfig();
+    // Create the JWT authorizer config from the Cognito user pool if using JWT auth
+    const jwtAuthorizerConfig = authenticationType === 'JWT' && this.cognitoUserPool
+      ? this.cognitoUserPool.createJwtAuthorizerConfig()
+      : undefined;
 
     // Create the MCP Gateway using the agent-core-gateway construct
     this.mcpGateway = new AgentCoreGateway(this, 'McpGateway', {
       gatewayName: props?.gatewayName || `McpGateway-${this.node.addr.substring(0, 8)}`,
       description: props?.gatewayDescription || 'MCP Gateway with multiple integration targets',
       executionRole: this.gatewayExecutionRole,
+      authenticationType,
       jwtAuthorizer: jwtAuthorizerConfig,
       enableSemanticSearch: props?.enableSemanticSearch,
       exceptionLevel: props?.exceptionLevel,
@@ -156,10 +164,18 @@ export class McpGatewayStack extends cdk.Stack {
       description: 'URL of the MCP Gateway',
     });
 
-    // Output the Cognito Discovery URL
-    new cdk.CfnOutput(this, 'CognitoDiscoveryUrl', {
-      value: this.cognitoUserPool.discoveryUrl,
-      description: 'OpenID Connect Discovery URL',
+    // Output the Cognito Discovery URL only if using JWT authentication
+    if (authenticationType === 'JWT' && this.cognitoUserPool) {
+      new cdk.CfnOutput(this, 'CognitoDiscoveryUrl', {
+        value: this.cognitoUserPool.discoveryUrl,
+        description: 'OpenID Connect Discovery URL',
+      });
+    }
+
+    // Output the authentication type
+    new cdk.CfnOutput(this, 'AuthenticationType', {
+      value: authenticationType,
+      description: 'Gateway authentication type (JWT or IAM)',
     });
 
     // Output the schema bucket name

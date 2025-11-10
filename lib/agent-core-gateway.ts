@@ -16,10 +16,19 @@ export interface AgentCoreGatewayProps {
   readonly description?: string;
   readonly executionRole: iam.Role;
   /**
+   * Authentication type for inbound requests.
+   * - JWT: Use JWT tokens with Cognito (requires jwtAuthorizer config)
+   * - IAM: Use AWS IAM authentication (SigV4)
+   * 
+   * @default 'JWT'
+   */
+  readonly authenticationType?: 'JWT' | 'IAM';
+  /**
    * JWT authorizer configuration for inbound authentication.
+   * Required when authenticationType is 'JWT'.
    * Must provide either allowedAudience or allowedClients.
    */
-  readonly jwtAuthorizer: CustomJWTAuthorizerConfig;
+  readonly jwtAuthorizer?: CustomJWTAuthorizerConfig;
   /**
    * Enable semantic search for intelligent tool discovery.
    * Can only be set during creation, not updated later.
@@ -55,7 +64,11 @@ export class AgentCoreGateway extends Construct {
   constructor(scope: Construct, id: string, props: AgentCoreGatewayProps) {
     super(scope, id);
 
-    // Region and account ID are not needed since we use props.jwtAuthorizer
+    // Validate authentication configuration
+    const authType = props.authenticationType || 'JWT';
+    if (authType === 'JWT' && !props.jwtAuthorizer) {
+      throw new Error('jwtAuthorizer configuration is required when authenticationType is JWT');
+    }
 
     // Build protocol configuration
     const protocolConfiguration: any = {
@@ -78,6 +91,19 @@ export class AgentCoreGateway extends Construct {
         separator: '-',
         allowedSpecialCharacters: '',
       });
+
+    // Build authorizer configuration based on authentication type
+    const authorizerType = authType === 'IAM' ? 'AWS_IAM' : 'CUSTOM_JWT';
+    const authorizerConfiguration = authType === 'JWT' && props.jwtAuthorizer
+      ? {
+          customJWTAuthorizer: {
+            discoveryUrl: props.jwtAuthorizer.discoveryUrl,
+            allowedAudience: props.jwtAuthorizer.allowedAudience,
+            allowedClients: props.jwtAuthorizer.allowedClients,
+          },
+        }
+      : undefined;
+
     const gateway = new custom.AwsCustomResource(this, 'Gateway', {
       onCreate: {
         service: 'bedrock-agentcore-control',
@@ -88,14 +114,8 @@ export class AgentCoreGateway extends Construct {
           protocolType: 'MCP',
           protocolConfiguration,
           roleArn: props.executionRole.roleArn,
-          authorizerType: 'CUSTOM_JWT',
-          authorizerConfiguration: {
-            customJWTAuthorizer: {
-              discoveryUrl: props.jwtAuthorizer.discoveryUrl,
-              allowedAudience: props.jwtAuthorizer.allowedAudience,
-              allowedClients: props.jwtAuthorizer.allowedClients,
-            },
-          },
+          authorizerType,
+          authorizerConfiguration,
           exceptionLevel: props.exceptionLevel,
           kmsKeyArn: props.kmsKeyArn,
         },
@@ -111,14 +131,8 @@ export class AgentCoreGateway extends Construct {
           protocolType: 'MCP',
           protocolConfiguration,
           roleArn: props.executionRole.roleArn,
-          authorizerType: 'CUSTOM_JWT',
-          authorizerConfiguration: {
-            customJWTAuthorizer: {
-              discoveryUrl: props.jwtAuthorizer.discoveryUrl,
-              allowedAudience: props.jwtAuthorizer.allowedAudience,
-              allowedClients: props.jwtAuthorizer.allowedClients,
-            },
-          },
+          authorizerType,
+          authorizerConfiguration,
           exceptionLevel: props.exceptionLevel,
           kmsKeyArn: props.kmsKeyArn,
         },

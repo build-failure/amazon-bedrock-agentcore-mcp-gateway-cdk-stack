@@ -22,6 +22,7 @@ const gatewayName = gatewayConfig.name || 'McpGateway';
 const gatewayDescription = gatewayConfig.description || 'MCP Gateway';
 const enableSemanticSearch = gatewayConfig.enableSemanticSearch || false;
 const exceptionLevel = gatewayConfig.exceptionLevel === 'DEBUG' ? 'DEBUG' : undefined;
+const authenticationType = gatewayConfig.authenticationType === 'IAM' ? 'IAM' : 'JWT';
 
 // Get AWS configuration
 const awsConfig = config.aws || {};
@@ -39,6 +40,7 @@ new McpGatewayStack(app, 'McpGatewayStackV4', {
   gatewayDescription,
   enableSemanticSearch,
   exceptionLevel,
+  authenticationType,
   
   // Integration targets configuration
   integrationTargets,
