@@ -252,7 +252,7 @@
         }
       }
     },
-    "/queries": {
+    "/statements": {
       "post": {
         "summary": "Execute SQL query",
         "operationId": "executeQuery",
