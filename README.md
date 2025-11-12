@@ -64,9 +64,46 @@ The application can be configured using a `config.json` file in the project root
 - `exceptionLevel`: Set to "DEBUG" for detailed error messages
 - `authenticationType`: Authentication method - "JWT" (default) or "IAM"
 
-### Adding New Integration Targets
+### Integration Target Types
 
-To add a new integration target, add a new entry to the `integrationTargets` array in your `config.json` file:
+The stack supports two types of integration targets:
+
+#### 1. AgentCore Built-in Integrations
+Use AWS Bedrock AgentCore's pre-built OpenAPI schemas for supported services. These schemas are maintained by AWS and stored in the AgentCore sample schemas S3 bucket.
+
+Prefix the type with `agentcore-` to use built-in integrations:
+
+```json
+{
+  "gateway": {
+    "name": "MyMcpGateway1",
+    "agentCoreSchemasBucket": "amazonbedrockagentcore-built-sampleschemas455e0815-egpctdjskcrf"
+  },
+  "integrationTargets": [
+    {
+      "type": "agentcore-jira",
+      "enabled": true,
+      "config": {
+        "apiKey": "your-jira-api-key"
+      }
+    }
+  ]
+}
+```
+
+**Important:** You need to specify the `agentCoreSchemasBucket` in your gateway configuration. To find your bucket name:
+1. Create a JIRA integration manually in the AWS Bedrock console
+2. View the target configuration to see the S3 URI
+3. Extract the bucket name (e.g., `amazonbedrockagentcore-built-sampleschemas455e0815-egpctdjskcrf`)
+
+**Note:** For JIRA, the instance URL is specified dynamically via the `customerInstanceId` parameter in each MCP request, so no `baseUrl` is needed in the configuration.
+
+Supported AgentCore integrations:
+- `agentcore-jira` - JIRA integration (uses AWS pre-built schema)
+- Other integrations may be available depending on AWS's sample schemas bucket
+
+#### 2. Custom OpenAPI Integrations
+Use custom OpenAPI schemas for services not natively supported by AgentCore:
 
 ```json
 {
@@ -82,6 +119,8 @@ To add a new integration target, add a new entry to the `integrationTargets` arr
   }
 }
 ```
+
+For custom integrations, you'll need to provide an OpenAPI schema file in the `schemas/` directory named `{type}-open-api.json`.
 
 ## Deployment
 

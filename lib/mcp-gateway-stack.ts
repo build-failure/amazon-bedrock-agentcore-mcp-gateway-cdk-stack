@@ -32,6 +32,8 @@ export interface McpGatewayStackProps extends cdk.StackProps {
   authenticationType?: 'JWT' | 'IAM';
   // Configuration for integration targets
   integrationTargets?: IntegrationTargetConfig[];
+  // S3 bucket name for AWS built-in AgentCore schemas (optional, will use default pattern if not provided)
+  agentCoreSchemasBucket?: string;
 }
 
 export class McpGatewayStack extends cdk.Stack {
@@ -95,11 +97,19 @@ export class McpGatewayStack extends cdk.Stack {
       })
     );
 
+    // Build list of S3 bucket ARNs for permissions
+    const s3BucketArns = [this.schemaBucket.bucketArn];
+    
+    // Add AWS built-in schemas bucket if using AgentCore integrations
+    if (props?.agentCoreSchemasBucket) {
+      s3BucketArns.push(`arn:aws:s3:::${props.agentCoreSchemasBucket}`);
+    }
+    
     // Create the execution role with proper S3 bucket permissions
     this.gatewayExecutionRole = new AgentCoreGatewayExecutionRole(this, 'McpGatewayExecutionRole', {
       roleName: `McpGatewayExecRole-${roleUniqueId}`,
       enableSemanticSearch: props?.enableSemanticSearch,
-      s3BucketArns: [this.schemaBucket.bucketArn],
+      s3BucketArns: s3BucketArns,
     });
 
     // Add additional permissions if needed
@@ -188,29 +198,60 @@ export class McpGatewayStack extends cdk.Stack {
     if (props?.integrationTargets && props.integrationTargets.length > 0) {
       // Create integration targets based on configuration
       props.integrationTargets.forEach((targetConfig, index) => {
-        // Generate processed schema with dynamic base URL replacement
-        this.generateProcessedSchema(targetConfig);
         if (targetConfig.enabled) {
           const targetId = `${targetConfig.type.charAt(0).toUpperCase() + targetConfig.type.slice(1)}Target`;
           
-          // Use the IntegrationTarget construct which handles all the complexity
-          const integrationTarget = new IntegrationTarget(this, targetId, {
-            gateway: this.mcpGateway,
-            targetName: targetConfig.type,
-            description: `${targetConfig.type} REST API integration`,
-            openApiSchemaS3Uri: `s3://${this.schemaBucket.bucketName}/${targetConfig.type}-open-api.json`,
-            apiKey: targetConfig.config.apiKey,
-            auth: targetConfig.config.auth,
-          });
-          
-          // Store the integration target
-          this.integrationTargets[targetConfig.type] = integrationTarget;
-          
-          // Output the integration target ID
-          new cdk.CfnOutput(this, `${targetConfig.type}TargetId`, {
-            value: integrationTarget.target.targetId,
-            description: `ID of the ${targetConfig.type} REST API target`,
-          });
+          // Check if this is an AgentCore built-in integration
+          if (targetConfig.type.startsWith('agentcore-')) {
+            const integrationName = targetConfig.type.replace('agentcore-', '');
+            
+            // Use AWS's built-in schema from the AgentCore sample schemas bucket
+            // The bucket name can be provided in props or we'll use a default pattern
+            const schemasBucket = props?.agentCoreSchemasBucket || 'amazonbedrockagentcore-built-sampleschemas';
+            const builtInSchemaUri = `s3://${schemasBucket}/${integrationName}-open-api.json`;
+            
+            const integrationTarget = new IntegrationTarget(this, targetId, {
+              gateway: this.mcpGateway,
+              targetName: integrationName,
+              description: `${integrationName} AgentCore built-in integration`,
+              openApiSchemaS3Uri: builtInSchemaUri,
+              apiKey: targetConfig.config.apiKey,
+              auth: {
+                parameterName: 'Authorization',
+                prefix: 'Basic',
+              },
+            });
+            
+            // Store the integration target
+            this.integrationTargets[targetConfig.type] = integrationTarget;
+            
+            // Output the integration target ID
+            new cdk.CfnOutput(this, `${targetConfig.type}TargetId`, {
+              value: integrationTarget.target.targetId,
+              description: `ID of the ${integrationName} AgentCore integration target`,
+            });
+          } else {
+            // Custom OpenAPI integration - generate processed schema
+            this.generateProcessedSchema(targetConfig);
+            
+            const integrationTarget = new IntegrationTarget(this, targetId, {
+              gateway: this.mcpGateway,
+              targetName: targetConfig.type,
+              description: `${targetConfig.type} REST API integration`,
+              openApiSchemaS3Uri: `s3://${this.schemaBucket.bucketName}/${targetConfig.type}-open-api.json`,
+              apiKey: targetConfig.config.apiKey,
+              auth: targetConfig.config.auth,
+            });
+            
+            // Store the integration target
+            this.integrationTargets[targetConfig.type] = integrationTarget;
+            
+            // Output the integration target ID
+            new cdk.CfnOutput(this, `${targetConfig.type}TargetId`, {
+              value: integrationTarget.target.targetId,
+              description: `ID of the ${targetConfig.type} REST API target`,
+            });
+          }
         }
       });
     }

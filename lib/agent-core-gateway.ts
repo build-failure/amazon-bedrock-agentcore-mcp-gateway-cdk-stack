@@ -610,3 +610,154 @@ export class IntegrationTarget extends Construct {
     this.target.node.addDependency(apiKeyCredentialProvider);
   }
 }
+
+/**
+ * Properties for creating an AgentCore built-in integration target
+ */
+export interface AgentCoreIntegrationTargetProps {
+  /**
+   * The MCP Gateway to add the target to
+   */
+  readonly gateway: AgentCoreGateway;
+  
+  /**
+   * The name of the target
+   */
+  readonly targetName?: string;
+  
+  /**
+   * Description of the target
+   */
+  readonly description?: string;
+  
+  /**
+   * The integration type (e.g., 'JIRA', 'SLACK', 'SALESFORCE')
+   */
+  readonly integrationType: string;
+  
+  /**
+   * The API key for authentication
+   */
+  readonly apiKey?: string;
+  
+  /**
+   * The base URL for the integration (optional for integrations like JIRA that use dynamic instance resolution)
+   * For JIRA: The customerInstanceId parameter is passed with each request instead
+   * Example: https://your-company.atlassian.net
+   */
+  readonly baseUrl?: string;
+}
+
+/**
+ * A high-level construct for creating an AgentCore built-in integration target
+ */
+export class AgentCoreIntegrationTarget extends Construct {
+  /**
+   * The underlying AgentCoreGatewayTarget
+   */
+  public readonly target: AgentCoreGatewayTarget;
+  
+  constructor(scope: Construct, id: string, props: AgentCoreIntegrationTargetProps) {
+    super(scope, id);
+    
+    // Generate a deterministic ID based on the target name
+    const targetNameBase = props.targetName || 'integration';
+    const fixedString = `${targetNameBase}-agentcore-target-id`;
+    const hash = require('crypto')
+      .createHash('sha256')
+      .update(fixedString)
+      .digest('hex')
+      .substring(0, 10)
+      .toUpperCase();
+    const uniqueId = hash;
+    
+    // Create a secret in AWS Secrets Manager to store the API key
+    const secret = new secretsmanager.Secret(this, `${targetNameBase}ApiKeySecret`, {
+      secretName: `${targetNameBase.toLowerCase()}-agentcore-api-key-${uniqueId}`,
+      description: `API key for ${targetNameBase} AgentCore integration`,
+      secretStringValue: cdk.SecretValue.unsafePlainText(props.apiKey || 'dummy-api-key'),
+    });
+    
+    // Create the API key credential provider
+    const apiKeyCredentialProvider = new custom.AwsCustomResource(this, `${targetNameBase}ApiKeyCredentialProvider`, {
+      onCreate: {
+        service: 'bedrock-agentcore-control',
+        action: 'createApiKeyCredentialProvider',
+        parameters: {
+          name: `${targetNameBase.toLowerCase()}_agentcore_api_key_${uniqueId}`,
+          description: `API key credential provider for ${targetNameBase} AgentCore integration`,
+          apiKey: props.apiKey || 'dummy-api-key',
+        },
+        physicalResourceId: custom.PhysicalResourceId.fromResponse('name'),
+      },
+      onDelete: {
+        service: 'bedrock-agentcore-control',
+        action: 'deleteApiKeyCredentialProvider',
+        parameters: {
+          name: new custom.PhysicalResourceIdReference(),
+        },
+      },
+      policy: custom.AwsCustomResourcePolicy.fromStatements([
+        new iam.PolicyStatement({
+          actions: [
+            'bedrock-agentcore:CreateApiKeyCredentialProvider',
+            'bedrock-agentcore:UpdateApiKeyCredentialProvider',
+            'bedrock-agentcore:DeleteApiKeyCredentialProvider',
+            'bedrock-agentcore:GetApiKeyCredentialProvider',
+            'bedrock-agentcore:*',
+            'secretsmanager:CreateSecret',
+            'secretsmanager:UpdateSecret',
+            'secretsmanager:DeleteSecret',
+            'secretsmanager:GetSecretValue',
+            'secretsmanager:PutSecretValue',
+            'secretsmanager:DescribeSecret',
+          ],
+          resources: ['*'],
+        }),
+      ]),
+      installLatestAwsSdk: true,
+    });
+    
+    // Use a hardcoded ARN format for the provider ARN
+    const providerArn = `arn:aws:bedrock-agentcore:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:token-vault/default/apikeycredentialprovider/${targetNameBase.toLowerCase()}_agentcore_api_key_${uniqueId}`;
+    
+    // Create the target configuration for AgentCore integration
+    // Only include baseUrl if provided (some integrations like JIRA use dynamic instance resolution)
+    const integrationConfig: any = {
+      integrationType: props.integrationType,
+    };
+    
+    if (props.baseUrl) {
+      integrationConfig.baseUrl = props.baseUrl;
+    }
+    
+    const targetConfig = {
+      integration: integrationConfig,
+    };
+    
+    // Create the target with AgentCore integration configuration
+    this.target = new AgentCoreGatewayTarget(this, `Target-${uniqueId}`, {
+      gateway: props.gateway,
+      targetName: `${targetNameBase}-${uniqueId}`,
+      description: props.description || `${targetNameBase} AgentCore Integration`,
+      targetConfiguration: targetConfig as any,
+      credentialProviderConfigurations: [
+        {
+          credentialProviderType: 'API_KEY',
+          credentialProvider: {
+            apiKeyCredentialProvider: {
+              providerArn: providerArn,
+              credentialLocation: 'HEADER',
+              credentialParameterName: 'Authorization',
+              credentialPrefix: 'Basic'
+            }
+          }
+        }
+      ],
+    });
+    
+    // Add dependencies to ensure resources are created in the right order
+    this.target.node.addDependency(secret);
+    this.target.node.addDependency(apiKeyCredentialProvider);
+  }
+}
