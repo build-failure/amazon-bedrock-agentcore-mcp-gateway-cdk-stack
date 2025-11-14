@@ -517,7 +517,7 @@ export class IntegrationTarget extends Construct {
     
     // Create a secret in AWS Secrets Manager to store the API key
     const secret = new secretsmanager.Secret(this, `${targetNameBase}ApiKeySecret`, {
-      secretName: `${targetNameBase.toLowerCase()}-api-key-${uniqueId}1`,
+      secretName: `${targetNameBase.toLowerCase()}-api-key-${uniqueId}A`,
       description: `API key for ${targetNameBase} integration`,
       secretStringValue: cdk.SecretValue.unsafePlainText(props.apiKey || 'dummy-api-key'),
     });
