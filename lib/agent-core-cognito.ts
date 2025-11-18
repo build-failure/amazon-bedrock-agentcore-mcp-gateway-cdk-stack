@@ -97,7 +97,7 @@ export class AgentCoreCognitoUserPool extends Construct {
       .update(hashInput)
       .digest('hex')
       .substring(0, 8);
-    const domainPrefix = `agent-gateway-${hash}`;
+    const domainPrefix = `${stackName}-agent-gateway-${hash}`;
 
     this.userPoolDomain = this.userPool.addDomain('UserPoolDomain', {
       cognitoDomain: {

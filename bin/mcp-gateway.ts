@@ -22,7 +22,7 @@ const stackName = config.stackName || 'McpGatewayStackV4';
 
 // Get gateway configuration from config file or use defaults
 const gatewayConfig = config.gateway || {};
-const gatewayName = gatewayConfig.name || 'McpGateway';
+const gatewayName = gatewayConfig.name || `${stackName}-McpGateway`;
 const gatewayDescription = gatewayConfig.description || 'MCP Gateway';
 const enableSemanticSearch = gatewayConfig.enableSemanticSearch || false;
 const exceptionLevel = gatewayConfig.exceptionLevel === 'DEBUG' ? 'DEBUG' : undefined;
