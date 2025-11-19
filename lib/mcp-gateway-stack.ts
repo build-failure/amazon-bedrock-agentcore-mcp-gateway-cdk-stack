@@ -51,8 +51,8 @@ export class McpGatewayStack extends cdk.Stack {
     // Create the Cognito User Pool only if using JWT authentication
     if (authenticationType === 'JWT') {
       this.cognitoUserPool = new AgentCoreCognitoUserPool(this, 'McpGatewayCognito', {
-        userPoolName: `McpGatewayUserPool-${this.node.addr.substring(0, 8)}`,
-        clientName: `McpGatewayClient-${this.node.addr.substring(0, 8)}`,
+        userPoolName: `${this.stackName}-McpGatewayUserPool-${this.node.addr.substring(0, 8)}`,
+        clientName: `${this.stackName}-McpGatewayClient-${this.node.addr.substring(0, 8)}`,
         enableSelfSignUp: false,
         tokenValidity: {
           accessToken: cdk.Duration.hours(1),
@@ -74,7 +74,7 @@ export class McpGatewayStack extends cdk.Stack {
     
     // Create S3 bucket for OpenAPI schemas first
     this.schemaBucket = new s3.Bucket(this, 'SchemaBucket', {
-      bucketName: `mcp-gateway-schemas-${this.account}-${this.region}-v3`,
+      bucketName: `${this.stackName.toLowerCase()}-schemas-${this.account}-${this.region}-v3`,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
       versioned: false,
@@ -107,7 +107,7 @@ export class McpGatewayStack extends cdk.Stack {
     
     // Create the execution role with proper S3 bucket permissions
     this.gatewayExecutionRole = new AgentCoreGatewayExecutionRole(this, 'McpGatewayExecutionRole', {
-      roleName: `McpGatewayExecRole-${roleUniqueId}`,
+      roleName: `${this.stackName}-McpGatewayExecRole-${roleUniqueId}`,
       enableSemanticSearch: props?.enableSemanticSearch,
       s3BucketArns: s3BucketArns,
     });
@@ -144,7 +144,7 @@ export class McpGatewayStack extends cdk.Stack {
 
     // Create the MCP Gateway using the agent-core-gateway construct
     this.mcpGateway = new AgentCoreGateway(this, 'McpGateway', {
-      gatewayName: props?.gatewayName || `McpGateway-${this.node.addr.substring(0, 8)}`,
+      gatewayName: props?.gatewayName || `${this.stackName}-McpGateway-${this.node.addr.substring(0, 8)}`,
       description: props?.gatewayDescription || 'MCP Gateway with multiple integration targets',
       executionRole: this.gatewayExecutionRole,
       authenticationType,

@@ -4,8 +4,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { McpGatewayStack } from '../lib/mcp-gateway-stack';
 
-// Load configuration from config.json file
-const configPath = path.resolve(process.cwd(), 'config.json');
+// Load configuration from config.json file or from CDK_CONFIG environment variable if set
+const defaultConfigPath = path.resolve(process.cwd(), 'config.json');
+const configPath = process.env.CDK_CONFIG ? path.resolve(process.env.CDK_CONFIG) : defaultConfigPath;
 let config: any = {};
 
 if (fs.existsSync(configPath)) {
@@ -13,12 +14,15 @@ if (fs.existsSync(configPath)) {
   const configContent = fs.readFileSync(configPath, 'utf8');
   config = JSON.parse(configContent);
 } else {
-  console.log('No config.json file found, using default configuration');
+  console.log(`No config file found at ${configPath}, using default configuration`);
 }
+
+// Get stack name from config file or use default
+const stackName = config.stackName || 'McpGatewayStackV4';
 
 // Get gateway configuration from config file or use defaults
 const gatewayConfig = config.gateway || {};
-const gatewayName = gatewayConfig.name || 'McpGateway';
+const gatewayName = gatewayConfig.name || `${stackName}-McpGateway`;
 const gatewayDescription = gatewayConfig.description || 'MCP Gateway';
 const enableSemanticSearch = gatewayConfig.enableSemanticSearch || false;
 const exceptionLevel = gatewayConfig.exceptionLevel === 'DEBUG' ? 'DEBUG' : undefined;
@@ -34,8 +38,8 @@ const integrationTargets = config.integrationTargets || [];
 // Create the CDK app
 const app = new cdk.App();
 
-// Create the MCP Gateway stack with a new name to avoid conflicts
-new McpGatewayStack(app, 'McpGatewayStackV4', {
+// Create the MCP Gateway stack with the name from config
+new McpGatewayStack(app, stackName, {
   // Stack configuration
   gatewayName,
   gatewayDescription,

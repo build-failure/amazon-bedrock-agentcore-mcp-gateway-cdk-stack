@@ -9,3 +9,4 @@ cdk.out
 
 .env
 config.json
+config*.json

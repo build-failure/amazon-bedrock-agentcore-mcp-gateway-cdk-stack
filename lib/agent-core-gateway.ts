@@ -517,7 +517,7 @@ export class IntegrationTarget extends Construct {
     
     // Create a secret in AWS Secrets Manager to store the API key
     const secret = new secretsmanager.Secret(this, `${targetNameBase}ApiKeySecret`, {
-      secretName: `${targetNameBase.toLowerCase()}-api-key-${uniqueId}A`,
+      secretName: `${cdk.Stack.of(this).stackName}-${targetNameBase.toLowerCase()}-api-key-${uniqueId}A`,
       description: `API key for ${targetNameBase} integration`,
       secretStringValue: cdk.SecretValue.unsafePlainText(props.apiKey || 'dummy-api-key'),
     });
@@ -533,7 +533,7 @@ export class IntegrationTarget extends Construct {
         service: 'bedrock-agentcore-control',
         action: 'createApiKeyCredentialProvider',
         parameters: {
-          name: `${targetNameBase.toLowerCase()}_api_key_${uniqueId}`,
+          name: `${cdk.Stack.of(this).stackName}_${targetNameBase.toLowerCase()}_api_key_${uniqueId}`,
           description: `API key credential provider for ${targetNameBase} integration`,
           apiKey: props.apiKey || 'dummy-api-key',
         },
@@ -571,7 +571,7 @@ export class IntegrationTarget extends Construct {
     
     // Use a hardcoded ARN format for the provider ARN
     // This is a workaround for the API key credential provider issue
-    const providerArn = `arn:aws:bedrock-agentcore:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:token-vault/default/apikeycredentialprovider/${targetNameBase.toLowerCase()}_api_key_${uniqueId}`;
+    const providerArn = `arn:aws:bedrock-agentcore:${cdk.Stack.of(this).region}:${cdk.Stack.of(this).account}:token-vault/default/apikeycredentialprovider/${cdk.Stack.of(this).stackName}_${targetNameBase.toLowerCase()}_api_key_${uniqueId}`;
     
     // Extract bucket name from S3 URI for permissions
     const s3UriMatch = props.openApiSchemaS3Uri.match(/^s3:\/\/([^\/]+)\/(.+)$/);
@@ -673,7 +673,7 @@ export class AgentCoreIntegrationTarget extends Construct {
     
     // Create a secret in AWS Secrets Manager to store the API key
     const secret = new secretsmanager.Secret(this, `${targetNameBase}ApiKeySecret`, {
-      secretName: `${targetNameBase.toLowerCase()}-agentcore-api-key-${uniqueId}`,
+      secretName: `${cdk.Stack.of(this).stackName}-${targetNameBase.toLowerCase()}-agentcore-api-key-${uniqueId}`,
       description: `API key for ${targetNameBase} AgentCore integration`,
       secretStringValue: cdk.SecretValue.unsafePlainText(props.apiKey || 'dummy-api-key'),
     });
@@ -684,7 +684,7 @@ export class AgentCoreIntegrationTarget extends Construct {
         service: 'bedrock-agentcore-control',
         action: 'createApiKeyCredentialProvider',
         parameters: {
-          name: `${targetNameBase.toLowerCase()}_agentcore_api_key_${uniqueId}`,
+          name: `${cdk.Stack.of(this).stackName}-${targetNameBase.toLowerCase()}_agentcore_api_key_${uniqueId}`,
           description: `API key credential provider for ${targetNameBase} AgentCore integration`,
           apiKey: props.apiKey || 'dummy-api-key',
         },
